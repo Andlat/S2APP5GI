@@ -61,76 +61,81 @@ TAILLE_TABLEAU = 2**16
 
 #  Vous devriez inclure vos classes et méthodes ici, qui seront appellées à partir du main
 
-
-class Pair:
-    """Creates a pair of values."""
-
-    def __init__(self, a, b):
-        """Init the pair values."""
-        self.a = a
-        self.b = b
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and other.a == self.a and other.b == self.b
-
-    def __hash__(self):
-        return hash((self.a, self.b))
+class Node:
+    def __init__(self, val=None):
+        self.val = val
+        self.count = 0
+        self.next = None
 
     def __str__(self):
-        return "A: " + str(self.a) + " B: " + str(self.b)
-
-class Digramme:
-    """Digramme de mots."""
-
-    def __init__(self, a, b):
-        self.digramme = Pair(a, b)
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and other == self
-
-    def __hash__(self):
-        return hash(self.digramme)
+        return "Node{val:" + str(self.val) + ", count:" + str(self.count) + "}->" + str(self.next)
 
 
-count = Pair(0, 0)
-
-
-class PairedHashTable:
-    """Hash table of Pairs"""
+class CountingHashTable:
     def __init__(self, size):
-        self.table = [Pair(None, 0) for i in range(size)]
+        self.table = [None for i in range(size)]
         self.size = size
 
     def __getitem__(self, key):
         return self.table[key]
 
+    def __str__(self):
+        s = "HashTable:{\n"
+        for i in range(self.size):
+            s += "\t" + str(self.table[i]) + "\n"
+
+        return s + "}"
+
     def add(self, obj):
-        _hash = hash(obj)
-        index = _hash % self.size
-        assert index >= 0, "ERROR ! Index is negative: " + str(index)
-        #  assert table[index] is not table[index+1], "IS SAME OBJECT. SHIT"
-        count.b += 1
-        if self.table[index].a is None:  # If empty pair
-            self.table[index].a = obj
-            self.table[index].b = 0
-        elif self.table[index].a == obj:  # if the object is already being counted
-            self.table[index].b += 1
-        else:  # Another object is already in that place
-            # TODO CREATE A LINKED LIST OR A TREE
-            count.a += 1
-            #print(index)
+        index = hash(obj) % self.size
 
+        node = self.table[index]
+        if node is None: #If no nodes exist at that index, create a new one with the given value
+            self.table[index] = Node(obj)
+            node = self.table[index]
 
-def findHighestCount(table):
-    """Needs a PairedHashTable, which the second value is the count"""
-    high = 0
-    index = -1;
-    for i in range(table.size):
-        if table[i].b > high:
-            high = table[i].b
-            index = i
+        elif node.val != obj:  # If something else is at that index
+            # Traverse linked list
+            foundInList = False
 
-    return table[index]
+            while node.next is not None:
+                node = node.next
+                if node.val == obj:
+                    foundInList = True
+                    break
+
+            if not foundInList:  # If not found value in linked list, create a new node
+                node.next = Node(obj)
+                node = node.next
+
+        # Increment count of the node/value
+        node.count += 1
+
+        return self
+
+    def count(self):
+        c = 0
+
+        for i in range(self.size):
+            node = self.table[i]
+            while node is not None:
+                node = node.next
+                c += 1
+
+        return c
+
+    def highest(self):
+        highestNode = Node(None)  # Starting with an empty node
+
+        for i in range(self.size):
+            node = self.table[i]
+            while node is not None:
+                if node.count > highestNode.count:
+                    highestNode = node
+
+                node = node.next
+
+        return highestNode
 
 
 def removePonc(str):
@@ -207,29 +212,47 @@ if __name__ == "__main__":
             print("    " + aut[-1])
 
 # ### À partir d'ici, vous devriez inclure les appels à votre code
-    table = PairedHashTable(TAILLE_TABLEAU)
+    table = CountingHashTable(TAILLE_TABLEAU)
+    _str = ""
+    count_init_ngramme = 0
 
     for file in glob.glob(rep_aut + "/*.txt"):
         print(file)
         with open(file) as stream:
-            digramme = Pair(None, None)
-
             for line in stream:
                 line = removePonc(line)
 
                 for word in line.split():
-                    if digramme.a is None:
-                        digramme.a = word
-                    else:
-                        digramme.a = digramme.b
-                        digramme.b = word
+                    word = word.lower()  # Ajuster tous les mots en lettres miniscules
 
-                        table.add(digramme)
-        break
+                    # Ajustement initial pour n-grammes§
+                    if count_init_ngramme < args.m:
+                        _str += " " + word
+                        count_init_ngramme += 1
+
+                        # Si le premier n-gramme est cree, l'ajouter dans la hashtable
+                        if count_init_ngramme == args.m:
+
+                            table.add(_str.strip())
+
+                    else:
+                        # Creer le prochain n-gramme (Retirer le premier mot et ajouter le nouveau a la fin)
+                        ngramme = _str.split()
+                        ngramme.pop(0)
+                        ngramme.append(word)
+                        _str = ' '.join(str(w) for w in ngramme)
+
+                        table.add(_str.strip())
+
+    print(str(table))
+    print(str(table.count()))
+    print(str(table.highest()))
+    """
     print("COUNT")
     print("DUPLICATES: ", end='')
     print(count.a)
     print("TOTAL: ", end='')
     print(count.b)
 
-    print(str(findHighestCount(table).b) + ", " + str(findHighestCount(table).a))
+    print(str(findHighestCount(table).val))
+    """
