@@ -247,12 +247,3 @@ if __name__ == "__main__":
     print(str(table))
     print(str(table.count()))
     print(str(table.highest()))
-    """
-    print("COUNT")
-    print("DUPLICATES: ", end='')
-    print(count.a)
-    print("TOTAL: ", end='')
-    print(count.b)
-
-    print(str(findHighestCount(table).val))
-    """
