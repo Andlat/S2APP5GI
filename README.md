@@ -1,6 +1,8 @@
 # S2APP5GI
 
 ## Fonctionnement du calcul de la fréquence des mots
+Exemple pour exécuter le programme: python3 markov.py -d textes/hugo -m 2
+
 La structure de données utilisée est une hash table qui contient des linked lists pour gérer les collisions. Le code supporte tous les n-grammes
 
 Chaque node de la linked list contient 3 membres:
