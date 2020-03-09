@@ -244,6 +244,5 @@ if __name__ == "__main__":
 
                         table.add(_str.strip())
 
-    print(str(table))
     print(str(table.count()))
     print(str(table.highest()))
